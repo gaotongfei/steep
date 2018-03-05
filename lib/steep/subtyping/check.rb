@@ -127,18 +127,23 @@ module Steep
 
         when relation.sub_type.is_a?(AST::Types::Name) && relation.super_type.is_a?(AST::Types::Name)
           if relation.sub_type.name == relation.super_type.name
-            results = relation.sub_type.args.zip(relation.super_type.args).map do |(sub, sup)|
-              check0(Relation.new(sub_type: sub, super_type: sup),
-                     assumption: assumption,
-                     trace: trace,
-                     constraints: constraints)
+            subst = Interface::Substitution.empty
+
+            relation.sub_type.args.zip(relation.super_type.args).each do |(sub, sup)|
+              case
+              when sub.is_a?(AST::Types::Var) && constraints.domain?(sub.name)
+                subst.add!(sub.name, sup)
+                constraints.add(sub.name, sub_type: sup, super_type: sup)
+              when sup.is_a?(AST::Types::Var) && constraints.domain?(sup.name)
+                subst.add!(sup.name, sub)
+                constraints.add(sup.name, sub_type: sub, super_type: sub)
+              end
             end
 
-            if results.all?(&:success?)
-              results.first
-            else
-              results.find(&:failure?)
-            end
+            check0(Relation.new(sub_type: relation.sub_type.subst(subst), super_type: relation.super_type.subst(subst)),
+                   assumption: assumption,
+                   trace: trace,
+                   constraints: constraints)
           else
             sub_interface = resolve(relation.sub_type)
             super_interface = resolve(relation.super_type)
