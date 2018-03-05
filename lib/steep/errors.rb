@@ -75,11 +75,15 @@ module Steep
       attr_reader :node
       attr_reader :expected
       attr_reader :actual
+      attr_reader :result
 
-      def initialize(node:, expected:, actual:)
+      include ResultPrinter
+
+      def initialize(node:, expected:, actual:, result:)
         super(node: node)
         @expected = expected
         @actual = actual
+        @result = result
       end
 
       def to_s

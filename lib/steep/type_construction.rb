@@ -1215,7 +1215,8 @@ module Steep
             return Errors::ArgumentTypeMismatch.new(
               node: arg_node,
               expected: relation.super_type,
-              actual: relation.sub_type
+              actual: relation.sub_type,
+              result: result
             )
           end
         end
