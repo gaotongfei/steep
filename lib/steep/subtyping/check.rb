@@ -59,23 +59,13 @@ module Steep
         when relation.sub_type.is_a?(AST::Types::Any) || relation.super_type.is_a?(AST::Types::Any)
           success(constraints: constraints)
 
-        when relation.super_type.is_a?(AST::Types::Var)
-          if constraints.domain?(relation.super_type.name)
-            constraints.add(relation.super_type.name, sub_type: relation.sub_type)
-            success(constraints: constraints)
-          else
-            failure(error: Result::Failure::UnknownPairError.new(relation: relation),
-                    trace: trace)
-          end
+        when relation.super_type.is_a?(AST::Types::Var) && constraints.domain?(relation.super_type.name) && !relation.sub_type.free_variables.include?(relation.super_type.name)
+          constraints.add(relation.super_type.name, sub_type: relation.sub_type)
+          success(constraints: constraints)
 
-        when relation.sub_type.is_a?(AST::Types::Var)
-          if constraints.domain?(relation.sub_type.name)
-            constraints.add(relation.sub_type.name, super_type: relation.super_type)
-            success(constraints: constraints)
-          else
-            failure(error: Result::Failure::UnknownPairError.new(relation: relation),
-                    trace: trace)
-          end
+        when relation.sub_type.is_a?(AST::Types::Var) && constraints.domain?(relation.sub_type.name) && !relation.super_type.free_variables.include?(relation.sub_type.name)
+          constraints.add(relation.sub_type.name, super_type: relation.super_type)
+          success(constraints: constraints)
 
         when relation.sub_type.is_a?(AST::Types::Union)
           results = relation.sub_type.types.map do |sub_type|
@@ -124,6 +114,10 @@ module Steep
           else
             results.find(&:failure?)
           end
+
+        # when relation.sub_type.is_a?(AST::Types::Var) || relation.super_type.is_a?(AST::Types::Var)
+        #   failure(error: Result::Failure::UnknownPairError.new(relation: relation),
+        #           trace: trace)
 
         when relation.sub_type.is_a?(AST::Types::Name) && relation.super_type.is_a?(AST::Types::Name)
           if relation.sub_type.name == relation.super_type.name

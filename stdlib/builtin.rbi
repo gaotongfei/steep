@@ -125,6 +125,7 @@ class Integer <: Numeric
   def **: (Integer) -> Integer
   def /: (Integer) -> Integer
   def ~: () -> Integer
+  def round: (Integer) -> (Float | Integer)
 end
 
 class Float <: Numeric
